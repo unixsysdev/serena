@@ -5,6 +5,7 @@
 
 * :rocket: Serena is a powerful **coding agent toolkit** capable of turning an LLM into a fully-featured agent that works **directly on your codebase**.
 * :wrench: Serena provides essential **semantic code retrieval and editing tools** that are akin to an IDE's capabilities, extracting code entities at the symbol level and exploiting relational structure.
+* :globe_with_meridians: Serena now includes **web search and content fetching capabilities**, allowing agents to search the web and fetch content from URLs for research and reference.
 * :free: Serena is **free & open-source**, enhancing the capabilities of LLMs you already have access to free of charge.
 
 ### Demonstration
@@ -826,7 +827,7 @@ For details on contributing, see [here](/CONTRIBUTING.md).
 
 ## Full List of Tools
 
-Here is the full list of Serena's tools with a short description (output of `uv run serena-list-tools`):
+Here is the full list of Serena's tools with a short description:
 
  * `activate_project`: Activates a project by name.
  * `check_onboarding_performed`: Checks whether project onboarding was already performed.
@@ -861,5 +862,7 @@ Here is the full list of Serena's tools with a short description (output of `uv 
  * `think_about_collected_information`: Thinking tool for pondering the completeness of collected information.
  * `think_about_task_adherence`: Thinking tool for determining whether the agent is still on track with the current task.
  * `think_about_whether_you_are_done`: Thinking tool for determining whether the task is truly completed.
+ * `web_fetch`: Fetches and parses content from a webpage URL.
+ * `web_search`: Searches the web using DuckDuckGo and returns formatted results.
  * `write_memory`: Writes a named memory (for future reference) to Serena's project-specific memory store.
 
