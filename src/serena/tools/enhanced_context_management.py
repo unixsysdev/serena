@@ -58,17 +58,12 @@ class AutoContextManager:
         if not self.agent:
             return
             
-        content = f"Task adherence check result: {adherence_result}\nAutomatic context save to track progress and decisions."
+        content = f"Task adherence check result: {adherence_result}\\nAutomatic context save to track progress and decisions."
         
-        if hasattr(self.agent, 'get_tool'):
-            save_tool = self.agent.get_tool('SaveContextExtractionTool')
-            if save_tool:
-                save_tool.apply(
-                    content=content,
-                    context_type="task_adherence",
-                    importance=8,
-                    tags="auto,task-adherence,progress-check"
-                )
+        # Use direct memory manager approach instead of looking up tool
+        if hasattr(self.agent, 'memories_manager'):
+            memory_name = f"context_task_adherence_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            self.agent.memories_manager.save_memory(memory_name, content)
     
     def auto_save_on_decision_point(self, decision: str, importance: int = 7):
         """Automatically save context when decisions are made"""

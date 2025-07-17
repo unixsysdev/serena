@@ -260,5 +260,11 @@ markers = [
 # Ref: https://github.com/codespell-project/codespell#using-a-config-file
 skip = '.git*,*.svg,*.lock,*.min.*'
 check-hidden = true
+
+[dependency-groups]
+dev = [
+    "poethepoet>=0.36.0",
+    "ruff>=0.12.3",
+]
 # ignore-regex = ''
 # ignore-words-list = ''

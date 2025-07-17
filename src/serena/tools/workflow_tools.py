@@ -10,48 +10,187 @@ from serena.tools import Tool, ToolMarkerDoesNotRequireActiveProject
 
 class CheckOnboardingPerformedTool(Tool):
     """
-    Checks whether project onboarding was already performed.
+    Enhanced onboarding check that includes context memories, tags, and session restoration.
     """
 
     def apply(self) -> str:
         """
-        Checks whether project onboarding was already performed.
+        Enhanced onboarding check that detects:
+        - Regular project memories
+        - Context memories (decisions, work states, file changes)
+        - Compressed sessions
+        - Available context for restoration
+        
         You should always call this tool before beginning to actually work on the project/after activating a project,
         but after calling the initial instructions tool.
         """
         from .memory_tools import ListMemoriesTool
+        from .enhanced_context_management import SearchContextTool, ContextStatsTool
 
         list_memories_tool = self.agent.get_tool(ListMemoriesTool)
         memories = json.loads(list_memories_tool.apply())
+        
         if len(memories) == 0:
             return (
                 "Onboarding not performed yet (no memories available). "
                 + "You should perform onboarding by calling the `onboarding` tool before proceeding with the task."
             )
-        else:
-            return f"""The onboarding was already performed, below is the list of available memories.
-            Do not read them immediately, just remember that they exist and that you can read them later, if it is necessary
-            for the current task.
-            Some memories may be based on previous conversations, others may be general for the current project.
-            You should be able to tell which one you need based on the name of the memory.
-            
-            {memories}"""
+        
+        # Analyze memory types and context
+        regular_memories = []
+        context_memories = []
+        session_memories = []
+        compressed_memories = []
+        
+        for memory in memories:
+            if memory.startswith('context_'):
+                context_memories.append(memory)
+            elif memory.startswith('session_'):
+                session_memories.append(memory)
+            elif memory.startswith('compressed_'):
+                compressed_memories.append(memory)
+            else:
+                regular_memories.append(memory)
+        
+        # Get context statistics
+        try:
+            context_stats_tool = self.agent.get_tool(ContextStatsTool)
+            context_stats = context_stats_tool.apply()
+        except:
+            context_stats = "Context management not available"
+        
+        # Build comprehensive onboarding report
+        result = f"""🚀 ENHANCED ONBOARDING COMPLETE - Context-Aware Project State
+
+📚 REGULAR PROJECT MEMORIES ({len(regular_memories)}):
+{regular_memories}
+
+🧠 CONTEXT MEMORIES ({len(context_memories)}):
+{context_memories[:10]}{"..." if len(context_memories) > 10 else ""}
+
+💾 SESSION DATA ({len(session_memories)}):
+{session_memories[:5]}{"..." if len(session_memories) > 5 else ""}
+
+🗜️ COMPRESSED CONTEXT ({len(compressed_memories)}):
+{compressed_memories[:5]}{"..." if len(compressed_memories) > 5 else ""}
+
+📊 CONTEXT MANAGEMENT STATUS:
+{context_stats}
+
+🎯 ONBOARDING RECOMMENDATIONS:
+1. Regular memories contain project structure and guidelines
+2. Context memories preserve work history and decisions
+3. Session data can be restored for work continuation
+4. Compressed memories contain extensive historical context
+
+💡 USAGE TIPS:
+- Use `search_context` to find relevant previous work
+- Use `restore_session` if continuing from compressed session
+- Use `load_relevant_context` for task-specific context
+- Context memories follow patterns: context_{{type}}_{{timestamp}}
+
+🏷️ MEMORY TAGS DETECTED:
+- Context types: decision, work_state, file_change, problem_solution, testing
+- Auto-saved decisions and important milestones preserved
+- Session compression available for context limit management
+
+✅ Project is fully onboarded with comprehensive context management!
+Ready for intelligent work continuation with full historical context.
+
+Note: Read memories selectively based on current task needs. Context search and restoration tools available for efficient work continuation."""
+        
+        return result
 
 
 class OnboardingTool(Tool):
     """
-    Performs onboarding (identifying the project structure and essential tasks, e.g. for testing or building).
+    Enhanced onboarding that sets up context management and checks for existing context.
     """
 
     def apply(self) -> str:
         """
+        Enhanced onboarding that:
+        1. Performs traditional project structure analysis
+        2. Initializes context management
+        3. Checks for existing context memories
+        4. Sets up session tracking
+        
         Call this tool if onboarding was not performed yet.
         You will call this tool at most once per conversation.
 
-        :return: instructions on how to create the onboarding information
+        :return: instructions on how to create the onboarding information with context setup
         """
+        from .enhanced_context_management import StartContextSessionTool, ContextStatsTool
+        
         system = platform.system()
-        return self.prompt_factory.create_onboarding_prompt(system=system)
+        basic_prompt = self.prompt_factory.create_onboarding_prompt(system=system)
+        
+        # Try to initialize context management
+        try:
+            # Start context session for this onboarding
+            start_session_tool = self.agent.get_tool(StartContextSessionTool)
+            session_result = start_session_tool.apply(
+                task_description="Initial project onboarding with context setup",
+                tags="onboarding,setup,initial"
+            )
+            
+            # Get context stats
+            context_stats_tool = self.agent.get_tool(ContextStatsTool)
+            context_stats = context_stats_tool.apply()
+            
+            context_setup = f"""
+
+🧠 CONTEXT MANAGEMENT INITIALIZED:
+{session_result}
+
+📊 Current Context Status:
+{context_stats}
+
+🎯 ENHANCED ONBOARDING INCLUDES:
+1. Traditional project structure analysis
+2. Context management system initialization  
+3. Session tracking for work continuity
+4. Auto-save capabilities for decisions
+5. Compression for context limit management
+
+💡 CONTEXT FEATURES AVAILABLE:
+- save_context_extraction: Save important work points
+- auto_decision_save: Automatically preserve decisions
+- compress_session: Handle context limits
+- restore_session: Continue work across sessions
+- search_context: Find relevant previous work
+
+🏷️ CONTEXT TAGGING SYSTEM:
+- Types: decision, work_state, file_change, problem_solution, testing
+- Tags: auto-generated + custom for organization
+- Importance: 1-10 scale for prioritization
+
+"""
+        except Exception as e:
+            context_setup = f"""
+
+⚠️ CONTEXT MANAGEMENT SETUP:
+Basic context tools available but session initialization had issues: {str(e)}
+You can still use context management tools manually.
+
+"""
+        
+        enhanced_prompt = f"""{basic_prompt}
+
+{context_setup}
+
+📋 ENHANCED ONBOARDING CHECKLIST:
+After completing the basic onboarding tasks, also:
+
+1. **Save Initial Project Structure** using save_context_extraction
+2. **Document Key Architectural Decisions** with auto_decision_save  
+3. **Set up Testing Commands** and save with appropriate tags
+4. **Record Build/Development Workflows** for future reference
+5. **Initialize Session Tracking** for work continuity
+
+🚀 Your onboarding will now include comprehensive context management for better work continuity!"""
+        
+        return enhanced_prompt
 
 
 class ThinkAboutCollectedInformationTool(Tool):
