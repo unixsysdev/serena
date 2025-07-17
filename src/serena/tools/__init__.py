@@ -7,3 +7,7 @@ from .cmd_tools import *
 from .config_tools import *
 from .workflow_tools import *
 from .jetbrains_tools import *
+from .compression_tools import *
+from .simple_compression_test import *
+from .context_management import *
+from .smart_context_loader import *
