@@ -70,18 +70,47 @@ class ThinkAboutCollectedInformationTool(Tool):
 
 class ThinkAboutTaskAdherenceTool(Tool):
     """
-    Thinking tool for determining whether the agent is still on track with the current task.
+    Enhanced thinking tool for determining whether the agent is still on track with the current task.
+    Automatically saves context for session restoration.
     """
 
-    def apply(self) -> str:
+    def apply(self, max_answer_chars: int = 10000) -> str:
         """
         Think about the task at hand and whether you are still on track.
         Especially important if the conversation has been going on for a while and there
         has been a lot of back and forth.
 
         This tool should ALWAYS be called before you insert, replace, or delete code.
+        Now automatically saves context for session continuity.
         """
-        return self.prompt_factory.create_think_about_task_adherence()
+        # Import here to avoid circular imports
+        from .enhanced_context_management import auto_context_manager
+        
+        # Set up auto context manager
+        auto_context_manager.agent = self.agent
+        if self.agent and hasattr(self.agent, 'get_project_root'):
+            project_root = self.agent.get_project_root()
+            if project_root:
+                auto_context_manager.setup_persistence(project_root)
+        
+        # Get the original prompt result
+        result = self.prompt_factory.create_think_about_task_adherence()
+        
+        # Automatically save this task adherence check
+        auto_context_manager.auto_save_on_task_adherence_check(
+            "Task adherence check performed - evaluating alignment with user intentions and project requirements"
+        )
+        
+        # Add auto-save notification
+        enhanced_result = f"""{result}
+
+🤖 AUTO-SAVED: This task adherence check has been automatically saved to context for session restoration.
+Tags: auto, task-adherence, progress-check
+Importance: 8/10
+
+💾 Context will be preserved across sessions to maintain work continuity."""
+        
+        return enhanced_result[:max_answer_chars] if len(enhanced_result) > max_answer_chars else enhanced_result
 
 
 class ThinkAboutWhetherYouAreDoneTool(Tool):
