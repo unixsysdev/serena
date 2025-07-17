@@ -11,3 +11,5 @@ from .compression_tools import *
 from .simple_compression_test import *
 from .context_management import *
 from .smart_context_loader import *
+from .enhanced_context_management import *
+from .intelligent_compression import *
