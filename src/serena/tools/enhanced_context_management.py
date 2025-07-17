@@ -77,15 +77,10 @@ class AutoContextManager:
             
         content = f"Decision made: {decision}\nAutomatic context save to preserve decision reasoning."
         
-        if hasattr(self.agent, 'get_tool'):
-            save_tool = self.agent.get_tool('SaveContextExtractionTool')
-            if save_tool:
-                save_tool.apply(
-                    content=content,
-                    context_type="decision",
-                    importance=importance,
-                    tags="auto,decision,reasoning"
-                )
+        # Use save_context_extraction directly instead of looking up tool
+        if hasattr(self.agent, 'memories_manager'):
+            memory_name = f"auto_decision_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+            self.agent.memories_manager.save_memory(memory_name, content)
     
     def _is_significant_file(self, file_path: str) -> bool:
         """Check if file change is significant enough to save context"""

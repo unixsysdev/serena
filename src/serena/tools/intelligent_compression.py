@@ -699,13 +699,13 @@ class IntelligentDecompressTextTool(Tool, ToolMarkerDoesNotRequireActiveProject)
         :return: Decompressed text with dictionary
         """
         try:
-            decompressed = intelligent_compressor.decompress(compressed_text)
+            # DON'T decompress - just give LLM the compressed text and dictionary
+            # The LLM can understand it without actual decompression
             
-            # Simple output: decompressed text + dictionary for reference
-            response = f"""DECOMPRESSED:
-{decompressed}
+            response = f"""COMPRESSED TEXT:
+{compressed_text}
 
-DICTIONARY USED:
+DICTIONARY FOR REFERENCE:
 """
             
             # Show the dictionary so LLM understands the mapping
@@ -714,6 +714,8 @@ DICTIONARY USED:
                 if len(response) > max_answer_chars - 100:
                     response += "..."
                     break
+            
+            response += "\n\nThe LLM can understand this compressed content without decompression."
             
             return self._limit_length(response, max_answer_chars)
             
